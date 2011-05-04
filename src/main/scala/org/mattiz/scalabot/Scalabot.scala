@@ -3,9 +3,9 @@ package org.mattiz.scalabot
 import io.Source
 import java.net._
 import URLEncoder.encode
-import org.jibble.pircbot.PircBot
 import java.lang.String
 import util.parsing.json.JSON
+import org.jibble.pircbot.{User, PircBot}
 
 
 /**
@@ -40,8 +40,15 @@ object Scalabot extends PircBot {
 		}
 	}
 
+	def injectIrcData(s: String):String = {
+		val params = getUsers("#vaffel").reduceLeft( (u1:Object, u2:User) => u1 + "\",\"" + u2 )
+		val cmd = "List(\"" + params + "\")"
+
+		s.replaceAll("%users%", cmd)
+	}
+
 	def main(args: Array[String]) {
-		setName("Scalabot_")
+		setName("Scalabot")
 		setVerbose(true)
 		setEncoding("UTF-8")
 		connect("irc.homelien.no")
@@ -53,7 +60,8 @@ object Scalabot extends PircBot {
 	override def onMessage(channel: String, sender: String, login: String, hostname: String, message: String) = {
 		if(message.startsWith(getName + ": ")) {
 			val code = message.substring((getName + ": ").length)
-			val result = formatOutput( eval( code ) ).restrictLengthTo(400)
+
+			val result = formatOutput( eval( injectIrcData(code) ) ).restrictLengthTo(400)
 
 			sendMessage(channel, result.replaceAll("res0: ", ""))
 		}
